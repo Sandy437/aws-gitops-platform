@@ -5,20 +5,15 @@
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![IaC](https://img.shields.io/badge/IaC-Terraform%20%7C%20OpenTofu-7B42BC)
 
-> A reusable Terraform/OpenTofu module library and GitOps delivery pipeline for a
-> Kubernetes platform on AWS — with remote-state locking, policy-gated CI, and ArgoCD.
-> Runs **entirely locally for $0** on kind; an optional, cost-guarded real-AWS path exists.
-
-<!-- ✍️ YOU WRITE THIS — replace the blockquote above with 2–3 sentences in YOUR OWN VOICE.
-     Say what problem this solves and who it's for. Do NOT use marketing language.
-     A reviewer who reads AI-polished boilerplate with zero opinions marks it down. -->
+> This project consists of a reusable Terraform/OpenTofu module library and GitOps delivery pipeline for a
+> Kubernetes (k8's) platform on AWS, with remote-state locking, policy-gated CI, and ArgoCD. This project can
+> run/runs **entirely locally for $0** on kind, and has an optional, cost-guarded path to real AWS also exists for an excercise or usecases against actual services.
 
 ---
 
 ## ⚠️ What this is (and honestly is not)
 
-This repo is a **portfolio-grade reference platform**, reproducible on a laptop. Being honest
-about fidelity is itself a senior signal, so:
+The whole thing is reproducible on a laptop. Being explicit about where the local version differs from real AWS is deliberate — that honesty is the point of the table below.
 
 | Component | Local (default, $0) | Real AWS (optional, guarded) |
 |-----------|---------------------|------------------------------|
