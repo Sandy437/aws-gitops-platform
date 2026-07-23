@@ -1,0 +1,31 @@
+# Terraform / OpenTofu
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars           # never commit real values; commit *.tfvars.example instead
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl.bak
+
+# Secrets / credentials — belt and braces (gitleaks pre-commit is the real guard)
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+aws-credentials*
+kubeconfig*
+
+# Local tooling
+.DS_Store
+.idea/
+.vscode/
+*.log
+tmp/
+dist/

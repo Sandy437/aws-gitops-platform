@@ -1,0 +1,6 @@
+# Pinned toolchain so a reviewer's environment matches mine (asdf/mise read this).
+# Versions below reflect what this repo was built and tested against.
+terraform 1.5.7
+helm 4.2.3
+kubectl 1.36.1
+kind 0.32.0
