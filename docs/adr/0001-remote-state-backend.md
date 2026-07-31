@@ -22,11 +22,9 @@ myself* rather than delegate it to a SaaS.
 
 Use **self-managed S3 + DynamoDB** for remote state.
 
-<!-- ✍️ YOU WRITE THIS (3-5 sentences, your voice) — the REAL reasoning:
-     Why S3+DynamoDB over Terraform Cloud for THIS project? Tie it to what you want to
-     demonstrate (operating the backend, locking mechanics, no SaaS dependency, staying $0
-     and local). This paragraph is the "taste" signal a reviewer looks for — it must be
-     your own judgment, not generic pros/cons. -->
+I chose to run my own state backend on S3 and DynamoDB rather than use Terraform Cloud because I want this project to be fully self-contained and free to run, Terraform Cloud is a managedSaaS that can't run against LocalStack, so it would break the "$0, entirely local" goal. More importantly, self-managing the backend shows I understand the mechanics I'd otherwise be     delegating: S3 versioning as the recovery path for a bad state write, and a DynamoDB item as the lock that stops two applies from racing. It's also what most AWS teams
+I've worked with actually use, so it's the honest thing to demonstrate. For a real multi-team production backend I'd reach for a KMS customer-managed key and cross-region replication;
+for a portfolio backend, AES256 plus versioning is a deliberate stopping point, not an oversight.
 
 ## Alternatives considered
 
