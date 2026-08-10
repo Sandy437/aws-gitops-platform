@@ -1,7 +1,7 @@
 # aws-gitops-platform
 
-<!-- Badges land in PR #3 (CI) and PR #11 (plan gate). Leave the placeholders. -->
-![CI](https://img.shields.io/badge/ci-pending-lightgrey)
+<!-- Plan-gate badge lands with build PR #11. -->
+[![ci](https://github.com/Sandy437/aws-gitops-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Sandy437/aws-gitops-platform/actions/workflows/ci.yml)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![IaC](https://img.shields.io/badge/IaC-Terraform%20%7C%20OpenTofu-7B42BC)
 
