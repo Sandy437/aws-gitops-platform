@@ -1,0 +1,85 @@
+# CI static-analysis gate — runs on every PR and push to main.
+#
+# Design notes (see also docs/adr/):
+# - Fully OFFLINE: no cloud credentials, no terraform plan here. The plan-in-CI
+#   job (build PR #11) is a separate workflow so badge-greenness never depends
+#   on a private AWS account and forks can run this safely.
+# - tfsec was archived by Aqua in favour of `trivy config` — we use Trivy
+#   deliberately rather than cargo-culting the dead binary.
+# - Checkov hard-fails on HIGH+ severity; narrow inline skips only, each with
+#   a written justification (never blanket --soft-fail).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: "1.5.7" # matches .tool-versions — last MPL-licensed Terraform
+
+jobs:
+  fmt-and-validate:
+    name: terraform fmt + validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform fmt (check only)
+        run: terraform fmt -check -recursive -diff
+
+      - name: terraform validate (every module)
+        run: |
+          set -euo pipefail
+          for dir in modules/*/; do
+            echo "::group::validate ${dir}"
+            terraform -chdir="${dir}" init -backend=false -input=false >/dev/null
+            terraform -chdir="${dir}" validate
+            echo "::endgroup::"
+          done
+
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.53.0
+
+      - name: tflint (recursive)
+        run: |
+          tflint --init
+          tflint --recursive --format=compact
+
+  security-scan:
+    name: trivy config + checkov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Trivy misconfig scan (successor to tfsec). Fails on HIGH/CRITICAL.
+      - name: trivy config
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      # Checkov: hard-fail on HIGH+. Inline `#checkov:skip=CKV_x:<reason>` only.
+      - name: checkov
+        uses: bridgecrewio/checkov-action@v12.1347.0
+        with:
+          directory: .
+          framework: terraform
+          quiet: true
+          hard_fail_on: HIGH

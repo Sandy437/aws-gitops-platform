@@ -40,6 +40,12 @@ for a portfolio backend, AES256 plus versioning is a deliberate stopping point, 
 - State locking depends on the DynamoDB table's hash key being named exactly `LockID`.
 - **Non-goal (for now):** KMS-CMK encryption and cross-region state replication — AES256 +
   versioning is enough for a portfolio backend; noted so the omission reads as a decision, not a gap.
+- **CI flags this, and that is expected.** Trivy `AWS-0132` (HIGH) fails on SSE-S3 and wants a
+  customer-managed KMS key. It is suppressed at the resource in `modules/remote-state/main.tf`
+  with a reason and an expiry (`exp:2027-02-01`), so the deferral cannot rot silently — after
+  that date CI fails again and forces a re-decision. The follow-up is an optional `kms_key_arn`
+  input that switches the bucket to `aws:kms` when supplied and stays on AES256 when not,
+  keeping the local $0 path unchanged.
 
 <!-- ✍️ OPTIONAL — add any consequence YOU actually care about (e.g. cost, blast radius,
      what you'd change for a real multi-team prod backend). One honest line beats none. -->
