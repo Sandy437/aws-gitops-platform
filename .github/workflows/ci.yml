@@ -19,31 +19,60 @@ permissions:
   contents: read
 
 env:
-  TF_VERSION: "1.5.7" # matches .tool-versions — last MPL-licensed Terraform
+  # OpenTofu, not Terraform — see docs/adr/0004-opentofu-vs-terraform.md.
+  # Config stays Terraform-compatible; only the CLI CI runs differs.
+  TOFU_VERSION: "1.12.5"
 
 jobs:
   fmt-and-validate:
-    name: terraform fmt + validate
+    name: tofu fmt + validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: opentofu/setup-opentofu@v2.0.2
         with:
-          terraform_version: ${{ env.TF_VERSION }}
+          tofu_version: ${{ env.TOFU_VERSION }}
 
-      - name: terraform fmt (check only)
-        run: terraform fmt -check -recursive -diff
+      - name: tofu fmt (check only)
+        run: tofu fmt -check -recursive -diff
 
-      - name: terraform validate (every module)
+      - name: tofu validate (every module)
         run: |
           set -euo pipefail
           for dir in modules/*/; do
             echo "::group::validate ${dir}"
-            terraform -chdir="${dir}" init -backend=false -input=false >/dev/null
-            terraform -chdir="${dir}" validate
+            tofu -chdir="${dir}" init -backend=false -input=false >/dev/null
+            tofu -chdir="${dir}" validate
             echo "::endgroup::"
           done
+
+  module-tests:
+    name: tofu test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: opentofu/setup-opentofu@v2.0.2
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      # Tests use `command = plan`, so they assert config logic with no credentials,
+      # no real infrastructure, and no cost. Skips modules that have no tests yet.
+      - name: tofu test (every module with tests/)
+        run: |
+          set -euo pipefail
+          found=0
+          for dir in modules/*/; do
+            if compgen -G "${dir}tests/*.tftest.hcl" >/dev/null; then
+              found=1
+              echo "::group::test ${dir}"
+              tofu -chdir="${dir}" init -backend=false -input=false >/dev/null
+              tofu -chdir="${dir}" test
+              echo "::endgroup::"
+            fi
+          done
+          [ "$found" -eq 1 ] || echo "No module tests found yet — nothing to run."
 
   tflint:
     name: tflint
