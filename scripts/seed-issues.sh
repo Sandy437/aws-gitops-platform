@@ -8,7 +8,9 @@ set -euo pipefail
 REPO="Sandy437/aws-gitops-platform"
 MILESTONE="Flagship 1 — AWS Terraform + GitOps platform"
 
-echo "==> Creating week labels (ignore 'already exists')"
+echo "==> Creating labels (ignore 'already exists')"
+# `task` must exist before any issue references it — GitHub does not auto-create labels.
+gh label create "task" --repo "$REPO" --color "C5DEF5" --description "PR-sized unit of work from the build plan" 2>/dev/null || true
 gh label create "week-1" --repo "$REPO" --color "1D76DB" --description "Foundations & safety gate" 2>/dev/null || true
 gh label create "week-2" --repo "$REPO" --color "0E8A16" --description "Compute, data, envs, plan-in-CI" 2>/dev/null || true
 gh label create "week-3" --repo "$REPO" --color "5319E7" --description "GitOps, cost guardrails, taste" 2>/dev/null || true
@@ -24,12 +26,26 @@ mk() {
   local week="$1" extra="$2" title="$3" body="$4"
   local labels="task,$week"
   [ -n "$extra" ] && labels="$labels,$extra"
-  gh issue create --repo "$REPO" \
-    --title "$title" \
-    --body "$body" \
-    --label "$labels" \
-    --milestone "$MILESTONE" >/dev/null
-  echo "   + $title"
+
+  # Skip if an issue with this exact title already exists — makes the script re-runnable.
+  if gh issue list --repo "$REPO" --state all --search "\"$title\" in:title" \
+       --json title --jq '.[].title' 2>/dev/null | grep -Fqx "$title"; then
+    echo "   = exists, skipping: $title"
+    return 0
+  fi
+
+  # Fail soft: a labelling problem on one issue must not abort the whole run.
+  if gh issue create --repo "$REPO" \
+      --title "$title" \
+      --body "$body" \
+      --label "$labels" \
+      --milestone "$MILESTONE" >/dev/null 2>&1; then
+    echo "   + $title"
+  else
+    echo "   ! FAILED (retrying without labels): $title"
+    gh issue create --repo "$REPO" --title "$title" --body "$body" \
+      --milestone "$MILESTONE" >/dev/null && echo "     + created unlabelled"
+  fi
 }
 
 echo "==> Creating 14 build-plan issues"
