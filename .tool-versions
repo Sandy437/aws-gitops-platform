@@ -1,5 +1,10 @@
 # Pinned toolchain so a reviewer's environment matches mine (asdf/mise read this).
-# Versions below reflect what this repo was built and tested against.
+#
+# CI runs OpenTofu — see docs/adr/0004-opentofu-vs-terraform.md. Terraform 1.5.7 is
+# listed because it is the last MPL-licensed release and the modules stay compatible
+# with it; either binary works locally for fmt/validate/plan. Module tests
+# (.tftest.hcl) need OpenTofu, since that framework postdates Terraform 1.5.
+opentofu 1.12.5
 terraform 1.5.7
 helm 4.2.3
 kubectl 1.36.1
