@@ -19,8 +19,19 @@ resource "aws_s3_bucket_versioning" "state" {
   }
 }
 
-# Encryption at rest (SSE). AES256 keeps it free and simple; a KMS key would be
-# the next step for prod (documented as a non-goal here — see ADR-0001).
+# Encryption at rest (SSE-S3 / AES256).
+#
+# Trivy AWS-0132 (HIGH) wants a customer-managed KMS key (SSE-KMS) here. That is
+# accepted-but-deferred, not overlooked: ADR-0001 records KMS-CMK as an explicit
+# non-goal for a portfolio backend, where AES256 + bucket versioning already gives
+# encryption at rest and a recovery path for a bad state write. SSE-KMS earns its
+# keep when you need key rotation policy, per-key access control, and CloudTrail
+# auditability of key use — i.e. a real multi-team production backend.
+#
+# The suppression carries an expiry so it cannot rot silently: after that date CI
+# fails again and forces a re-decision. Tracked for implementation as an optional
+# `kms_key_arn` input (see repo issues).
+#trivy:ignore:AWS-0132 exp:2027-02-01
 resource "aws_s3_bucket_server_side_encryption_configuration" "state" {
   bucket = aws_s3_bucket.state.id
   rule {
